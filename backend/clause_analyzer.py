@@ -8,7 +8,7 @@ LangChain + Groq (Llama 3.3 70B) orchestration layer.
 - v2: jurisdiction parameter added to generate_risk_report and answer_question
 """
 
-from typing import Literal
+from typing import Literal, Union
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.output_parsers import StrOutputParser
@@ -86,7 +86,7 @@ def extract_clause(clause_type: str, clause_text: str, section_reference: str) -
 def flag_risk(
     clause_type: str,
     risk_level: Literal["Critical", "High", "Medium", "Low", "None"],
-    risk_score: int,
+    risk_score: Union[int, str],
     issue_summary: str,
     detailed_analysis: str,
     recommendation: str,
@@ -306,11 +306,17 @@ class ClauseAnalyzer:
     ) -> dict:
         findings: list[dict] = []
 
+        def _safe_score(val) -> int:
+            try:
+                return int(val)
+            except (TypeError, ValueError):
+                return 0
+
         for clause_type, risk in risks.items():
             findings.append({
                 "clause_type": clause_type,
                 "risk_level": risk.get("risk_level", "None"),
-                "risk_score": risk.get("risk_score", 0),
+                "risk_score": _safe_score(risk.get("risk_score", 0)),
                 "issue_summary": risk.get("issue_summary", ""),
                 "detailed_analysis": risk.get("detailed_analysis", ""),
                 "recommendation": risk.get("recommendation", ""),
