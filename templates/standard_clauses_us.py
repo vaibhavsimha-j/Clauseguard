@@ -82,6 +82,17 @@ corporate contracts.
    1-2 weeks per year of service up to a cap).
    Red flag: No notice period at all, no severance regardless of tenure or role level,
    overly broad definition of "cause" that gives employer unchecked termination power.
+   → HIGH (score 62-78): Do NOT score termination as Standard or Low when ALL of these
+   are present: (1) company can terminate with zero notice, (2) no severance regardless
+   of tenure or role level, (3) definition of "cause" is so broad it gives company
+   unchecked power. This combination is significantly worse than at-will default.
+   At-will alone is Standard; at-will + no severance + zero notice + weaponised cause
+   definition = HIGH.
+   → MEDIUM (score 38-58): At-will with no severance, OR asymmetric notice period
+   (e.g. 90 days from employee but 0 from company), but not all three factors together.
+   → STANDARD (score 0-20): Pure at-will with reasonable mutual notice expectations and
+   no additional punitive terms. Do NOT score as Standard if notice asymmetry or
+   no-severance clauses are also present.
 
 6. ARBITRATION
    Law: Federal Arbitration Act (FAA), Epic Systems Corp v Lewis (SC 2018) upheld
