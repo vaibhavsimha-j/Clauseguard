@@ -135,6 +135,28 @@ with st.sidebar:
 
     st.divider()
 
+    # ── jurisdiction selector ──
+    st.markdown("**Jurisdiction**")
+    jurisdiction = st.selectbox(
+        "Jurisdiction",
+        ["India", "United States"],
+        label_visibility="collapsed",
+        key="jurisdiction",
+        help="Risk assessment and clause comparisons will follow this jurisdiction's laws",
+    )
+
+    # Warn if report was generated under a different jurisdiction
+    if (
+        st.session_state.risk_report is not None
+        and st.session_state.risk_report.get("jurisdiction") != jurisdiction
+    ):
+        st.warning(
+            f"Report was generated under **{st.session_state.risk_report.get('jurisdiction')}** law. "
+            "Click **Re-analyze** to regenerate under the new jurisdiction."
+        )
+
+    st.divider()
+
     # ── file upload ──
     st.markdown("**Upload Contract**")
     uploaded = st.file_uploader(
@@ -171,7 +193,8 @@ with st.sidebar:
                 with st.spinner("Analyzing clauses… (30–90 sec)"):
                     try:
                         st.session_state.risk_report = analyzer.generate_risk_report(
-                            st.session_state.contract_text
+                            st.session_state.contract_text,
+                            jurisdiction=jurisdiction,
                         )
                     except Exception as exc:
                         st.error(f"Analysis failed: {exc}")
@@ -243,7 +266,8 @@ with tab_qa:
                 chunks = vector_store.search(prompt, st.session_state.contract_id, k=5)
                 try:
                     reply = analyzer.answer_question(
-                        prompt, chunks, st.session_state.messages[:-1]
+                        prompt, chunks, st.session_state.messages[:-1],
+                        jurisdiction=jurisdiction,
                     )
                 except Exception as exc:
                     reply = f"⚠️ Error: {exc}"
@@ -262,6 +286,10 @@ with tab_risk:
         report = st.session_state.risk_report
         overall = report["overall_score"]
         label, color = score_label(overall)
+
+        report_jurisdiction = report.get("jurisdiction", "India")
+        flag = "🇮🇳" if report_jurisdiction == "India" else "🇺🇸"
+        st.caption(f"{flag} Analysed under **{report_jurisdiction}** law")
 
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Risk Score", f"{overall} / 100")

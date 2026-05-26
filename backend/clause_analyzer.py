@@ -1,8 +1,8 @@
 """
 LangChain + Groq (Llama 3.3 70B) orchestration layer.
 
-Improvements over v1:
-- Explicit risk-calibration examples in the system prompt (Critical vs High vs Medium)
+- Jurisdiction-aware system prompts (India / US)
+- Explicit risk-calibration examples per jurisdiction
 - Section pre-pass: extract all headings first, mandate coverage of every one
 - Gap-fill pass: after main loop, detect skipped sections and run a targeted follow-up
 """
@@ -17,49 +17,60 @@ from langchain_groq import ChatGroq
 
 GROQ_MODEL = "llama-3.3-70b-versatile"
 
-ANALYSIS_SYSTEM = """You are ClauseGuard, an expert legal contract analyst. \
+_ANALYSIS_BASE = """You are ClauseGuard, an expert legal contract analyst. \
 Your primary goal is COMPLETE coverage — you must analyze EVERY section listed.
 
 ━━ RISK SCORING CALIBRATION ━━
 
 Critical (85-100) — Deal-breaker. Immediate legal exposure. Do NOT sign without changes.
-  • Non-compete: duration >2 years, OR worldwide geographic scope, OR liquidated damages >$100k
+  • Non-compete: void/unenforceable under applicable law (e.g. Section 27 ICA in India),
+    OR duration >2 years, OR worldwide scope, OR liquidated damages >$100k
   • IP assignment: no carve-out for inventions made on personal time unrelated to business
-  • Confidentiality: permanent obligation, one-sided (employee only), no exclusions for public knowledge
-  • Arbitration: employee bears ALL costs + class action waiver + company retains right to go to court
-  • Indemnification: uncapped, one-directional (employee indemnifies company, no reciprocal obligation)
-  • Limitation of liability: company capped at a nominal amount ($100 or similar) with no equivalent cap on employee
+  • Confidentiality: permanent, one-sided (employee only), no exclusions for public knowledge
+  • Arbitration: employee bears ALL costs + class action waiver + company retains court access
+  • Indemnification: uncapped, one-directional (employee only, no reciprocal obligation)
+  • Liability cap: company capped at nominal amount with no equivalent cap on employee
 
 High (60-84) — Significant. Must negotiate before signing.
-  • Non-compete: 1-2 years with broad industry scope or overly broad geography
-  • Termination: no notice period AND no severance for any reason regardless of tenure
-  • One-sided indemnification with some cap, or mutual but very low cap for employee
-  • Liability exclusions that overwhelmingly favor one party
+  • Non-compete: enforceable jurisdiction but broad scope/geography
+  • Termination: no notice period AND no severance regardless of tenure
+  • One-sided indemnification with some cap
+  • Liability exclusions overwhelmingly favouring one party
 
 Medium (35-59) — Common but worth negotiating if possible.
-  • At-will employment without any severance provision
-  • Non-solicitation covering all customers (not just those employee directly worked with)
-  • Mandatory arbitration with cost-sharing (not fully on employee)
-  • Governing law in a jurisdiction that limits employee rights
+  • At-will employment without severance provision
+  • Non-solicitation covering all customers (not just those employee worked with)
+  • Mandatory arbitration with cost-sharing
+  • Governing law in an unfavourable jurisdiction
 
-Low (10-34) — Minor deviation from market standard.
+Low (10-34) — Minor deviation from standard.
 None (0-9) — Acceptable, market-standard language.
 
 ━━ PROCESS ━━
 For EACH section in the provided list:
   1. Call extract_clause (verbatim text + section reference)
-  2. Call flag_risk (apply calibration above carefully)
+  2. Call flag_risk (apply calibration + jurisdiction law above carefully)
   3. Call compare_to_standard for: Non-Compete, Confidentiality, IP Assignment,
      Limitation of Liability, Indemnification, Termination, Arbitration
 
 Do NOT stop until every listed section is covered.
 After all tool calls, write a 2-3 sentence executive summary."""
 
-QA_SYSTEM = (
-    "You are ClauseGuard, a legal contract analyst. "
-    "Answer questions about contracts concisely and precisely. "
-    "Cite specific sections when possible. Note any risks relevant to the question."
-)
+
+def _build_analysis_system(jurisdiction: str) -> str:
+    from templates import get_jurisdiction_context
+    return _ANALYSIS_BASE + "\n\n" + get_jurisdiction_context(jurisdiction)
+
+
+def _build_qa_system(jurisdiction: str) -> str:
+    law = "Indian law (Indian Contract Act 1872 and related statutes)" if jurisdiction == "India" \
+          else "US law (federal and state commercial law)"
+    return (
+        f"You are ClauseGuard, a legal contract analyst specialising in {law}. "
+        "Answer questions about contracts concisely and precisely. "
+        "Reference applicable statutes and case law from the jurisdiction when relevant. "
+        "Cite specific sections when possible. Note any risks relevant to the question."
+    )
 
 
 # ── LangChain tools ────────────────────────────────────────────────────────────
@@ -115,6 +126,7 @@ class ClauseAnalyzer:
         question: str,
         context_chunks: list[str],
         history: list[dict],
+        jurisdiction: str = "India",
     ) -> str:
         context = "\n\n---\n\n".join(context_chunks) if context_chunks else "No relevant sections found."
 
@@ -132,7 +144,7 @@ class ClauseAnalyzer:
                 history_messages.append(AIMessage(content=str(content)))
 
         prompt = ChatPromptTemplate.from_messages([
-            ("system", QA_SYSTEM),
+            ("system", _build_qa_system(jurisdiction)),
             MessagesPlaceholder("history"),
             ("human", "Relevant contract sections:\n\n{context}\n\nQuestion: {question}"),
         ])
@@ -142,7 +154,7 @@ class ClauseAnalyzer:
 
     # ── Risk report ───────────────────────────────────────────────────────────
 
-    def generate_risk_report(self, contract_text: str) -> dict:
+    def generate_risk_report(self, contract_text: str, jurisdiction: str = "India") -> dict:
         truncated = contract_text[:50000]
 
         # ── Step 1: extract section headings so we can mandate complete coverage ──
@@ -156,12 +168,12 @@ class ClauseAnalyzer:
         main_prompt = (
             f"{sections_directive}\n\n"
             "For each section: call extract_clause → flag_risk → compare_to_standard (key clauses).\n"
-            "Apply the risk calibration in the system prompt exactly.\n"
+            "Apply the risk calibration and jurisdiction law in the system prompt exactly.\n"
             "After ALL sections are done, write a 2-3 sentence executive summary.\n\n"
             f"CONTRACT TEXT:\n\n{truncated}"
         )
 
-        extracted, risks, comparisons, summary = self._run_tool_loop(main_prompt)
+        extracted, risks, comparisons, summary = self._run_tool_loop(main_prompt, jurisdiction=jurisdiction)
 
         # ── Step 3: gap-fill — find sections the model skipped ────────────────
         skipped = self._find_skipped_sections(section_list, extracted)
@@ -173,7 +185,7 @@ class ClauseAnalyzer:
                 + "\n".join(f"  • {s}" for s in skipped)
                 + f"\n\nCONTRACT TEXT:\n\n{truncated}"
             )
-            ext2, risk2, comp2, summary2 = self._run_tool_loop(gap_prompt)
+            ext2, risk2, comp2, summary2 = self._run_tool_loop(gap_prompt, jurisdiction=jurisdiction)
             # Merge gap-fill results (don't overwrite existing good data)
             for k, v in ext2.items():
                 extracted.setdefault(k, v)
@@ -184,7 +196,7 @@ class ClauseAnalyzer:
             if summary2 and not summary:
                 summary = summary2
 
-        return self._build_report(extracted, risks, comparisons, summary)
+        return self._build_report(extracted, risks, comparisons, summary, jurisdiction)
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -207,12 +219,13 @@ class ClauseAnalyzer:
     def _run_tool_loop(
         self,
         user_prompt: str,
+        jurisdiction: str = "India",
         max_iterations: int = 35,
     ) -> tuple[dict, dict, dict, str]:
         """Run the agentic tool-use loop and return (extracted, risks, comparisons, summary)."""
         llm_with_tools = self.llm.bind_tools(TOOLS)
         messages: list = [
-            SystemMessage(content=ANALYSIS_SYSTEM),
+            SystemMessage(content=_build_analysis_system(jurisdiction)),
             HumanMessage(content=user_prompt),
         ]
         summary = ""
@@ -288,6 +301,7 @@ class ClauseAnalyzer:
         risks: dict,
         comparisons: dict,
         summary: str,
+        jurisdiction: str = "India",
     ) -> dict:
         findings: list[dict] = []
 
@@ -349,4 +363,5 @@ class ClauseAnalyzer:
             "summary": summary,
             "total_clauses": len(extracted),
             "high_risk_count": len([f for f in findings if f["risk_score"] >= 60]),
+            "jurisdiction": jurisdiction,
         }
