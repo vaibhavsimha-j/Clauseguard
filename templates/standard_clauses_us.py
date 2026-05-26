@@ -21,14 +21,18 @@ corporate contracts.
    Adequate consideration required (new hire or material benefit for existing employee).
    Red flag: >2 years duration, worldwide or overly broad geography, covers entire industry,
    no adequate consideration, liquidated damages exceeding actual likely harm.
-   → CRITICAL (score 85-100): ANY of these alone is sufficient for Critical:
-     • Employee works in California — clause is VOID under CA B&P Code 16600 regardless of
-       what the contract says. Employer cannot enforce it, but litigation risk remains.
-     • Nationwide or worldwide scope (not limited to employee's work geography).
-     • Duration >2 years.
-     • Liquidated damages >$100,000.
-     • Contract explicitly states it overrides state law (e.g. "notwithstanding California law").
-   → HIGH (score 65-84): Enforceable jurisdiction but broad scope, 1-2 years, industry-wide.
+   → CRITICAL (score 88-100): Score CRITICAL if ANY ONE of these is present — do not
+     downgrade to High even if other factors seem reasonable:
+     • Employee location is California (or MN, ND, OK, ND) — clause is VOID under CA B&P
+       Code 16600. Flag as Critical regardless of duration, scope, or other terms.
+     • Contract explicitly says "notwithstanding [state] law" or "enforceable in all
+       jurisdictions including California" — this signals the employer knows the clause
+       is void and is attempting to override statute. Automatically Critical.
+     • Nationwide or worldwide geographic scope.
+     • Duration strictly greater than 2 years.
+     • Liquidated damages amount exceeds $100,000.
+   → HIGH (score 65-84): Enforceable jurisdiction, scope limited to region/industry,
+     1-2 years duration, no oversize liquidated damages.
    → MEDIUM (score 40-60): Enforceable jurisdiction, reasonable geography, 6-12 months.
 
 2. NON-SOLICITATION
@@ -96,6 +100,14 @@ corporate contracts.
    confidentiality breaches, and willful misconduct are market standard.
    Red flag: One-sided cap (company capped, employee not), nominal cap amount ($100),
    carve-outs that effectively nullify the cap for routine commercial disputes.
+   → CRITICAL (score 85-95): Company liability is capped at a nominal or token amount
+   (e.g. $100, $500, $1,000) with NO equivalent cap on the employee's liability. Any cap
+   under $10,000 for a professional employment contract should be treated as nominal/token
+   and scored Critical. This is a fundamental asymmetry.
+   → HIGH (score 65-84): Company cap is low but not nominal (e.g. 1 month of salary),
+   or cap is mutual but with carve-outs that heavily favour one side.
+   → MEDIUM (score 40-60): Mutual cap but set lower than market standard (below 12 months
+   of fees/salary), or consequential damages excluded only on one side.
 
 8. INDEMNIFICATION
    Standard: Mutual indemnification for breach of representations and third-party IP claims.
