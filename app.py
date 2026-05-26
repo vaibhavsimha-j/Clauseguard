@@ -14,7 +14,7 @@ st.markdown(
     [data-testid="stSidebar"] * { color: #e2e8f0 !important; }
     [data-testid="stSidebar"] .stButton button { background: #1e40af; color: white !important; border: none; }
     [data-testid="stSidebar"] .stButton button:hover { background: #1d4ed8; }
-    [data-testid="stSidebar"] input { color: #0f172a !important; }
+    [data-testid="stSidebar"] input { color: #ffffff !important; }
     div[data-testid="stExpander"] { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 6px; }
     .risk-score-box { text-align: center; padding: 24px; border-radius: 12px; border: 2px solid; margin-bottom: 16px; }
     .score-number { font-size: 3rem; font-weight: 800; line-height: 1; }
