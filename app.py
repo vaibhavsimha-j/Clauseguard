@@ -90,6 +90,7 @@ for _key, _default in [
     ("contract_text", None),
     ("messages", []),
     ("risk_report", None),
+    ("analysis_error", None),
 ]:
     if _key not in st.session_state:
         st.session_state[_key] = _default
@@ -178,6 +179,7 @@ with st.sidebar:
             st.session_state.contract_text = text
             st.session_state.messages = []
             st.session_state.risk_report = None
+            st.session_state.analysis_error = None
             st.success(f"Indexed {len(chunks)} sections")
         except Exception as exc:
             st.error(f"Failed to process file: {exc}")
@@ -189,6 +191,7 @@ with st.sidebar:
 
         if st.session_state.risk_report is None:
             if st.button("🔍 Generate Risk Report", type="primary", use_container_width=True):
+                st.session_state.analysis_error = None
                 analyzer = get_analyzer(groq_key)
                 with st.spinner("Analyzing clauses… (30–90 sec)"):
                     try:
@@ -197,8 +200,12 @@ with st.sidebar:
                             jurisdiction=jurisdiction,
                         )
                     except Exception as exc:
-                        st.error(f"Analysis failed: {exc}")
+                        import traceback
+                        st.session_state.analysis_error = f"{exc}\n\n{traceback.format_exc()}"
                 st.rerun()
+
+            if st.session_state.analysis_error:
+                st.error(f"Analysis failed: {st.session_state.analysis_error}")
         else:
             st.success("Report ready")
             if st.button("↺ Re-analyze", use_container_width=True):
@@ -206,7 +213,7 @@ with st.sidebar:
                 st.rerun()
 
         if st.button("Clear contract", use_container_width=True):
-            for k in ("contract_id", "contract_name", "contract_text", "messages", "risk_report"):
+            for k in ("contract_id", "contract_name", "contract_text", "messages", "risk_report", "analysis_error"):
                 st.session_state[k] = None if k != "messages" else []
             st.rerun()
 

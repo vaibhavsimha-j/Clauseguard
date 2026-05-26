@@ -10,7 +10,10 @@
       "Bash(pip index *)",
       "Bash(python3 -c \"from langchain_pinecone import PineconeVectorStore; from pinecone import Pinecone, ServerlessSpec; from langchain_groq import ChatGroq; from langchain_huggingface import HuggingFaceEmbeddings; print\\('All imports OK'\\)\")",
       "Bash(python3 -c \"import langchain_pinecone; print\\(dir\\(langchain_pinecone\\)\\)\")",
-      "Bash(git remote *)"
+      "Bash(git remote *)",
+      "Bash(python3 -c \"import fpdf\")",
+      "Bash(python3 -c \"import reportlab\")",
+      "Bash(python3 -)"
     ],
     "additionalDirectories": [
       "/Users/vaibhavsimhaj/.claude/projects/-Users-vaibhavsimhaj-Professional-IT-Projects-ClauseGuard"
