@@ -39,10 +39,11 @@ corporate contracts.
    Standard: 12-24 months. Customers: limited to those employee directly worked with.
    Passive receipt of unsolicited inbound inquiries should be excluded.
    Employee non-solicitation: 12-18 months is market standard.
-   → MEDIUM (score 40-58): Broad post-employment non-solicitation covering ALL customers
-   (not just those employee worked with directly), global/nationwide scope, or duration
-   beyond 24 months. Enforceable in most US states but deviates from market standard.
-   Score this MEDIUM, not High — it is a common overreach but not a deal-breaker by itself.
+   → MEDIUM (score 40-58): Score non-solicitation as MEDIUM even when multiple unfavorable
+   factors are present (e.g. all-customer scope + nationwide + 2 years). Non-solicitation
+   is generally enforceable in most US states (unlike non-compete) and does not rise to
+   High risk on its own. Do NOT score non-solicitation as High regardless of breadth —
+   it is a common overreach but courts regularly blue-pencil it.
    → LOW (score 15-35): Duration within market standard (12-24 months) AND limited to
    customers the employee personally served.
 
