@@ -37,6 +37,14 @@ frameworks — not just market norms.
    information: 2-3 years post-employment is reasonable. Must be mutual or have clear
    justification. One-sided, perpetual obligations for non-trade-secret information are
    unfavorable and may be challenged.
+   → India scoring override: Do NOT score confidentiality as Critical. Indian courts apply
+   equitable principles and would NOT enforce a perpetual obligation for general confidential
+   information — they would limit it to a reasonable period (2-3 years). Immediate legal
+   exposure is lower than in countries with strong trade secrets legislation.
+   → HIGH (score 65-78): Perpetual, one-sided confidentiality with no exclusions for publicly
+   known information or independently developed information.
+   → MEDIUM (score 40-60): One-sided but with a defined (if long) post-employment period,
+   or mutual but with missing exclusion carve-outs.
 
 4. IP ASSIGNMENT
    Law: Copyright Act 1957 Section 17, Patents Act 1970.
@@ -101,4 +109,11 @@ frameworks — not just market norms.
    will still apply mandatory Indian statutes (labour laws, consumer protection, etc.).
    Red flag: Clause requiring employee to litigate exclusively in a foreign country or
    distant Indian city with no connection to where work is performed.
+   → India scoring: Do NOT score foreign governing law as Critical. Indian mandatory statutes
+   (Industrial Disputes Act, Payment of Gratuity Act, Shops & Establishments Acts, labour laws)
+   continue to apply regardless of the governing law clause — they cannot be stripped by contract.
+   → HIGH (score 60-72): Foreign governing law (e.g. English law) AND exclusive foreign court
+   jurisdiction. Creates a real practical barrier to justice but does not void statutory protections.
+   → MEDIUM (score 40-58): Foreign governing law only, with Indian courts still having jurisdiction,
+   or a distant Indian city with weak connection to where the employee works.
 """
