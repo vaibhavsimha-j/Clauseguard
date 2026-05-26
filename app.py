@@ -180,7 +180,7 @@ with st.sidebar:
             st.session_state.messages = []
             st.session_state.risk_report = None
             st.session_state.analysis_error = None
-            st.success(f"Indexed {len(chunks)} sections")
+            st.success("Contract uploaded successfully")
         except Exception as exc:
             st.error(f"Failed to process file: {exc}")
 
