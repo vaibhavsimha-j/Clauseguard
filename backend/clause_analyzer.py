@@ -5,6 +5,7 @@ LangChain + Groq (Llama 3.3 70B) orchestration layer.
 - Explicit risk-calibration examples per jurisdiction
 - Section pre-pass: extract all headings first, mandate coverage of every one
 - Gap-fill pass: after main loop, detect skipped sections and run a targeted follow-up
+- v2: jurisdiction parameter added to generate_risk_report and answer_question
 """
 
 from typing import Literal
