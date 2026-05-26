@@ -39,6 +39,12 @@ corporate contracts.
    Standard: 12-24 months. Customers: limited to those employee directly worked with.
    Passive receipt of unsolicited inbound inquiries should be excluded.
    Employee non-solicitation: 12-18 months is market standard.
+   → MEDIUM (score 40-58): Broad post-employment non-solicitation covering ALL customers
+   (not just those employee worked with directly), global/nationwide scope, or duration
+   beyond 24 months. Enforceable in most US states but deviates from market standard.
+   Score this MEDIUM, not High — it is a common overreach but not a deal-breaker by itself.
+   → LOW (score 15-35): Duration within market standard (12-24 months) AND limited to
+   customers the employee personally served.
 
 3. CONFIDENTIALITY
    Law: Defend Trade Secrets Act 2016 (federal), Uniform Trade Secrets Act (adopted by
@@ -123,4 +129,12 @@ corporate contracts.
    protection laws, which may override some contract terms.
    Red flag: Inconvenient forum requiring employee to litigate far from where they work,
    one-sided jury trial waiver.
+   → MEDIUM (score 38-55): Governing law of a state different from where the employee
+   works AND exclusive jurisdiction in that state's courts (e.g. Delaware law + Delaware
+   courts for a California employee). Creates a real practical burden — employee must
+   litigate in another state. Score MEDIUM, not Low or High.
+   → LOW (score 15-35): Governing law of a different state but employee retains access
+   to local courts, or inconvenient but not dramatically distant forum.
+   → STANDARD (score 0-14): Governing law matches employee's work state, or neutral
+   commercial jurisdiction (NY, DE) with no meaningful inconvenience.
 """
