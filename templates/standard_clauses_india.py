@@ -131,9 +131,10 @@ frameworks — not just market norms.
    salary revisions are at the company's discretion. This means upward revisions are not
    guaranteed — it does NOT mean the company can unilaterally cut base salary (which would
    require employee consent under employment law principles).
-   → STANDARD / NO RISK (score 0-15): Clause stating compensation may be revised at
+   → STANDARD / NO RISK (score 0-8): Clause stating compensation may be revised at
    company's discretion, or that bonus/ESOP/variable pay is not guaranteed. This is normal
-   boilerplate. Do NOT score this as Medium or High.
-   → LOW (score 15-30): Only if the clause explicitly allows the company to REDUCE base
+   boilerplate in Indian contracts. Assign a score of 5 or below. Do NOT score this as
+   Low, Medium, or High — it must be Standard / No Risk.
+   → LOW (score 10-25): Only if the clause explicitly allows the company to REDUCE base
    salary unilaterally without employee consent, or removes all statutory deductions protections.
 """
