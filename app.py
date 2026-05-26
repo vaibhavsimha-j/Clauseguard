@@ -226,12 +226,6 @@ st.markdown(
     "Upload any contract — NDA, employment agreement, service agreement — "
     "and get structured risk analysis powered by Llama 3.3 70B."
 )
-st.divider()
-c1, c2, c3 = st.columns(3)
-c1.info("**📤 Upload**\nPDF, Word, or plain text contracts")
-c2.info("**💬 Ask**\nNatural-language Q&A backed by RAG")
-c3.info("**🚨 Analyze**\nStructured risk scoring with clause-by-clause breakdown")
-
 if not st.session_state.contract_id:
     st.stop()
 
