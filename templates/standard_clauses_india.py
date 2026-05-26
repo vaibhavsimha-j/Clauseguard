@@ -45,8 +45,13 @@ frameworks — not just market norms.
    Patents Act — employee specifically hired to invent: employer owns the patent. General
    employee whose invention is incidental: employee may retain rights.
    Patent assignment must be in writing; recordal at the Indian Patent Office is advisable.
-   Red flag: Assigning rights to inventions made entirely outside employment scope and
-   unrelated to company business — may not be enforceable under Indian law.
+   → HIGH risk (score 65-75): Assignment covers inventions made outside working hours using
+   personal resources, with no carve-out for personal-time work unrelated to company business.
+   Even if partially unenforceable under Patents Act 1970, the employee still faces litigation
+   risk and practical harassment. The clause creates a chilling effect on personal projects.
+   → HIGH/CRITICAL risk (score 75-85): Same as above PLUS a post-employment assignment tail
+   (e.g. any invention conceived within 1-2 years after termination). This extends beyond
+   any reasonable employment scope and is a significant overreach.
 
 5. TERMINATION AND NOTICE
    Law: Industrial Disputes Act 1947, Payment of Gratuity Act 1972,
