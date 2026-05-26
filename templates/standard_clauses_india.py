@@ -118,10 +118,13 @@ frameworks — not just market norms.
    → India scoring: Do NOT score foreign governing law as Critical. Indian mandatory statutes
    (Industrial Disputes Act, Payment of Gratuity Act, Shops & Establishments Acts, labour laws)
    continue to apply regardless of the governing law clause — they cannot be stripped by contract.
-   → HIGH (score 60-72): Foreign governing law (e.g. English law) AND exclusive foreign court
-   jurisdiction. Creates a real practical barrier to justice but does not void statutory protections.
-   → MEDIUM (score 40-58): Foreign governing law only, with Indian courts still having jurisdiction,
-   or a distant Indian city with weak connection to where the employee works.
+   → HIGH (score 62-72): When BOTH conditions are present: (1) foreign governing law such as
+   English law or US law, AND (2) exclusive jurisdiction of foreign courts. This combination
+   forces the Indian employee to litigate in another country — a HIGH practical barrier to
+   justice. Score this HIGH, not Medium.
+   → MEDIUM (score 40-58): Foreign governing law only WITHOUT exclusive foreign court
+   jurisdiction (Indian courts still have access), or a distant Indian city with no connection
+   to where the employee works.
 
 10. COMPENSATION AND BENEFITS (GENERAL)
    Standard in India: It is market-standard for Indian employment contracts to state that
