@@ -99,8 +99,9 @@ for _key, _default in [
 # ── sidebar ────────────────────────────────────────────────────────────────────
 
 with st.sidebar:
-    st.markdown("## Credentials")
-    st.caption("Your API keys are safe with us!")
+    st.markdown("## 🔑 API Configuration")
+    st.markdown("Enter your API keys to start ClauseGuard.")
+    st.info("🔒 Your API Keys are SAFE with us!")
     st.divider()
 
     groq_key = st.text_input(
