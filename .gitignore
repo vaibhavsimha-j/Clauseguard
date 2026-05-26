@@ -72,3 +72,6 @@ htmlcov/
 # ── Local vector DB (if switched to Chroma later) ─────────────────────────────
 .chroma/
 chroma_db/
+
+# ── Claude Code local config ───────────────────────────────────────────────────
+.claude/
