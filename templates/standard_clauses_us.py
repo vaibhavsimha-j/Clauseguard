@@ -21,6 +21,15 @@ corporate contracts.
    Adequate consideration required (new hire or material benefit for existing employee).
    Red flag: >2 years duration, worldwide or overly broad geography, covers entire industry,
    no adequate consideration, liquidated damages exceeding actual likely harm.
+   → CRITICAL (score 85-100): ANY of these alone is sufficient for Critical:
+     • Employee works in California — clause is VOID under CA B&P Code 16600 regardless of
+       what the contract says. Employer cannot enforce it, but litigation risk remains.
+     • Nationwide or worldwide scope (not limited to employee's work geography).
+     • Duration >2 years.
+     • Liquidated damages >$100,000.
+     • Contract explicitly states it overrides state law (e.g. "notwithstanding California law").
+   → HIGH (score 65-84): Enforceable jurisdiction but broad scope, 1-2 years, industry-wide.
+   → MEDIUM (score 40-60): Enforceable jurisdiction, reasonable geography, 6-12 months.
 
 2. NON-SOLICITATION
    Standard: 12-24 months. Customers: limited to those employee directly worked with.
@@ -45,6 +54,14 @@ corporate contracts.
    works created within the scope of employment.
    Red flag: No personal-time carve-out, assignment extends to pre-existing inventions
    without an exhibit listing them, assignment of future inventions with no temporal limit.
+   → CRITICAL (score 85-95): No personal-time carve-out AND employee is in California
+   (or CA, DE, IL, MN, NC, WA) where statutory carve-out protections exist. Contract
+   explicitly waiving CA Labor Code Section 2870 or similar state statute is CRITICAL —
+   statutory employee protections cannot be contractually waived.
+   → HIGH (score 65-84): No personal-time carve-out in a state without a specific statute,
+   or assignment extends beyond termination with no reasonable time limit.
+   → MEDIUM (score 40-60): Carve-out present but poorly drafted or missing pre-existing
+   invention exhibit.
 
 5. TERMINATION AND NOTICE
    Law: At-will doctrine (most states), WARN Act (60 days for mass layoffs ≥100 employees).
@@ -63,6 +80,15 @@ corporate contracts.
    Red flag: Employee bears all arbitration costs, class action waiver combined with
    company retaining unrestricted court access, no specified rules or arbitrator selection,
    non-appealable award clause.
+   → CRITICAL (score 85-95): All three conditions together = CRITICAL: (1) employee bears
+   ALL arbitration costs, AND (2) class action waiver, AND (3) company retains unrestricted
+   court access while employee is bound to arbitrate. This combination strips the employee
+   of all practical dispute resolution options.
+   → CRITICAL (score 85-90): Even two of the above combined with a non-appealable award
+   clause or no arbitrator selection process.
+   → HIGH (score 65-84): One-sided cost allocation or class action waiver alone without
+   the other aggravating factors.
+   → MEDIUM (score 40-60): Mandatory arbitration with fair cost-sharing and no class waiver.
 
 7. LIMITATION OF LIABILITY
    Standard: Mutual cap equal to fees paid in the preceding 12 months. Mutual exclusion
