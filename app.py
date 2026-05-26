@@ -119,24 +119,15 @@ with st.sidebar:
         help="Get yours at app.pinecone.io",
         key="pinecone_api_key",
     )
-    index_name = st.text_input(
-        "Pinecone Index Name",
-        value="clauseguard",
-        help="Index will be created automatically on first use",
-        key="pinecone_index",
-    )
 
-    keys_ready = bool(groq_key and pinecone_key and index_name)
+    index_name = "clauseguard"  # fixed — users don't need to configure this
+    keys_ready = bool(groq_key and pinecone_key)
 
     if keys_ready:
         st.success("Connected")
     else:
-        missing = []
-        if not groq_key:
-            missing.append("Groq API Key")
-        if not pinecone_key:
-            missing.append("Pinecone API Key")
-        st.warning(f"Enter: {', '.join(missing)}" if missing else "Enter index name")
+        missing = [k for k, v in [("Groq API Key", groq_key), ("Pinecone API Key", pinecone_key)] if not v]
+        st.warning(f"Enter: {', '.join(missing)}")
 
     # Stop here if keys aren't ready — nothing below works without them
     if not keys_ready:
