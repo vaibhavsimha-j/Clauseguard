@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping ClauseGuard
-        run: curl -s -L -o /dev/null -w "%{http_code}" https://clauseguard.streamlit.app
+        run: curl -s -L -o /dev/null -w "%{http_code}" https://clauseguardapp.streamlit.app

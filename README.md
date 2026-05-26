@@ -1,6 +1,6 @@
 # ⚖️ ClauseGuard — Legal Contract Intelligence
 
-[![Try ClauseGuard](https://img.shields.io/badge/Try%20ClauseGuard-Live%20App-brightgreen?style=for-the-badge&logo=streamlit)](https://clauseguard.streamlit.app)
+[![Try ClauseGuard](https://img.shields.io/badge/Try%20ClauseGuard-Live%20App-brightgreen?style=for-the-badge&logo=streamlit)](https://clauseguardapp.streamlit.app)
 
 > Upload any contract. Get a structured, jurisdiction-aware risk report — clause by clause — in under 90 seconds.
 
