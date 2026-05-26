@@ -29,6 +29,12 @@ frameworks — not just market norms.
    Narrow non-solicitation (only customers employee directly served, only active deals) may
    survive if it protects genuine trade secrets rather than restraining trade.
    During-employment restriction: fully valid.
+   → MEDIUM (score 40-55): Broad post-employment non-solicitation covering ALL customers
+   (including those the employee never worked with) and/or global scope. Questionable under
+   Section 27 ICA but courts have sometimes upheld narrow versions — uncertainty makes this
+   Medium, not High. Do NOT score broad non-solicitation as High.
+   → LOW (score 15-35): Narrow non-solicitation limited to customers the employee personally
+   served, active deals only, reasonable duration (≤12 months), limited geography.
 
 3. CONFIDENTIALITY
    Law: Indian Contract Act 1872 (equitable principles), IT Act 2000 Section 72A,
@@ -116,4 +122,15 @@ frameworks — not just market norms.
    jurisdiction. Creates a real practical barrier to justice but does not void statutory protections.
    → MEDIUM (score 40-58): Foreign governing law only, with Indian courts still having jurisdiction,
    or a distant Indian city with weak connection to where the employee works.
+
+10. COMPENSATION AND BENEFITS (GENERAL)
+   Standard in India: It is market-standard for Indian employment contracts to state that
+   salary revisions are at the company's discretion. This means upward revisions are not
+   guaranteed — it does NOT mean the company can unilaterally cut base salary (which would
+   require employee consent under employment law principles).
+   → STANDARD / NO RISK (score 0-15): Clause stating compensation may be revised at
+   company's discretion, or that bonus/ESOP/variable pay is not guaranteed. This is normal
+   boilerplate. Do NOT score this as Medium or High.
+   → LOW (score 15-30): Only if the clause explicitly allows the company to REDUCE base
+   salary unilaterally without employee consent, or removes all statutory deductions protections.
 """
