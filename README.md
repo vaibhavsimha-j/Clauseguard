@@ -42,7 +42,7 @@ flowchart TD
 |---|---|---|
 | UI | Streamlit | Chat interface, risk report display, clause browser |
 | LLM | Google — `Gemini Flash Model` | Clause extraction, risk scoring, Q&A |
-| LLM Client | LangChain Groq | Groq API integration + tool binding |
+| LLM Client | LangChain-google-genai | Google-genai API integration + tool binding |
 | Vector DB | Pinecone (serverless) | Semantic search over contract chunks |
 | Embeddings | `BAAI/bge-small-en-v1.5` | 384-dim sentence embeddings via sentence-transformers |
 | Orchestration | LangChain LCEL | Prompt chains, tool-use agentic loop |
@@ -126,7 +126,7 @@ The overall contract score is a weighted aggregate: top score × 0.45 + second s
 ### Prerequisites
 
 - Python 3.10+
-- A free [Groq API key](https://console.groq.com)
+- A free [Google Gemini API key](https://aistudio.google.com/)
 - A free [Pinecone API key](https://app.pinecone.io)
 
 ### Run Locally
@@ -152,7 +152,7 @@ Then open your browser at `http://localhost:8501` and enter your API keys in the
 ### Risk Analysis
 
 ```
-1. Enter your Groq and Pinecone API keys in the sidebar
+1. Enter your Google and Pinecone API keys in the sidebar
 2. Select jurisdiction: India or United States
 3. Upload a PDF, Word, or plain-text contract
 4. Click "Generate Risk Report"
@@ -225,7 +225,7 @@ Legal standards are stored as structured text in `templates/`, not as hardcoded 
 Using a hosted vector DB means the contract index persists across sessions and is accessible in deployed environments without a local file system dependency.
 
 **BAAI/bge-small-en-v1.5 embeddings**
-Groq has no embeddings API. A compact 384-dim sentence-transformer model runs locally for fast, zero-cost embeddings without adding a second paid API dependency.
+A compact 384-dim sentence-transformer model runs locally for fast, zero-cost embeddings without adding a second paid API dependency.
 
 **Session-scoped credentials**
 API keys are entered in the sidebar and bound to `@st.cache_resource` keyed by the key string. Keys are never written to disk, never logged, and are garbage-collected when the session ends.
@@ -235,8 +235,7 @@ API keys are entered in the sidebar and bound to `@st.cache_resource` keyed by t
 ## ⚠️ Limitations
 
 - Contract text is **truncated at 50,000 characters** — very long contracts may have later sections skipped
-- Risk analysis takes **30–90 seconds** depending on contract length (Groq rate limits + multiple tool-call rounds)
-- Groq free tier has **rate limits** (~30 requests/minute) — analysis may fail under heavy load
+- Risk analysis takes **30–90 seconds** depending on contract length (Google rate limits + multiple tool-call rounds)
 - Legal analysis is **AI-generated** and should not substitute for advice from a qualified lawyer
 - Pinecone free tier supports **one index** — all contracts share the `clauseguard` index, filtered by `contract_id`
 
