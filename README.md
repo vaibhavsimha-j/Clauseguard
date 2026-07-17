@@ -42,7 +42,7 @@ flowchart TD
 |---|---|---|
 | UI | Streamlit | Chat interface, risk report display, clause browser |
 | LLM | Google — `Gemini Flash Model` | Clause extraction, risk scoring, Q&A |
-| LLM Client | LangChain-google-genai | Google-genai API integration + tool binding |
+| LLM Client | langchain-google-genai | Google Gemini API integration + tool binding |
 | Vector DB | Pinecone (serverless) | Semantic search over contract chunks |
 | Embeddings | `BAAI/bge-small-en-v1.5` | 384-dim sentence embeddings via sentence-transformers |
 | Orchestration | LangChain LCEL | Prompt chains, tool-use agentic loop |
@@ -60,7 +60,7 @@ flowchart LR
     DP -->|chunks + text| PC["🗄️ Pinecone\nVector Store"]
     ST -->|question| CA["🧠 ClauseAnalyzer"]
     PC -->|top-k chunks| CA
-    CA --> GR["⚡ Google Gemini API \nGemini Flash Model"]
+    CA --> GR["⚡ Google Gemini API\nGemini Flash Model"]
     GR -->|tool calls| TR["🛠️ Tool Results"]
     TR --> RB["📊 Report Builder"]
     RB --> ST
