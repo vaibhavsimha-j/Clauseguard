@@ -1,11 +1,11 @@
 """
-LangChain + Groq (Llama 3.3 70B) orchestration layer.
+LangChain + Gemini Flash orchestration layer.
 
 - Jurisdiction-aware system prompts (India / US)
 - Explicit risk-calibration examples per jurisdiction
 - Section pre-pass: extract all headings first, mandate coverage of every one
 - Gap-fill pass: after main loop, detect skipped sections and run a targeted follow-up
-- v2: jurisdiction parameter added to generate_risk_report and answer_question
+- v3: migrated from Groq/Llama to Google Gemini Flash
 """
 
 from typing import Literal, Union
@@ -14,9 +14,9 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, Tool
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
-from langchain_groq import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
 
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GEMINI_MODEL = "gemini-flash-latest"
 
 _ANALYSIS_BASE = """You are ClauseGuard, an expert legal contract analyst. \
 Your primary goal is COMPLETE coverage — you must analyze EVERY section listed.
@@ -110,14 +110,32 @@ def compare_to_standard(
 TOOLS = [extract_clause, flag_risk, compare_to_standard]
 
 
+# ── helper: flatten Gemini list content to plain string ───────────────────────
+
+def _flatten_content(content) -> str:
+    """Gemini returns content as list[dict] — flatten to plain string."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return " ".join(
+            block.get("text", "") for block in content
+            if isinstance(block, dict) and block.get("type") == "text"
+        )
+    return ""
+
+
 # ── Analyzer ──────────────────────────────────────────────────────────────────
 
 class ClauseAnalyzer:
-    def __init__(self, groq_api_key: str) -> None:
-        self._llm = ChatGroq(model=GROQ_MODEL, api_key=groq_api_key, temperature=0)
+    def __init__(self, gemini_api_key: str) -> None:
+        self._llm = ChatGoogleGenerativeAI(
+            model=GEMINI_MODEL,
+            google_api_key=gemini_api_key,
+            temperature=0,
+        )
 
     @property
-    def llm(self) -> ChatGroq:
+    def llm(self) -> ChatGoogleGenerativeAI:
         return self._llm
 
     # ── Q&A ───────────────────────────────────────────────────────────────────
@@ -158,7 +176,7 @@ class ClauseAnalyzer:
     def generate_risk_report(self, contract_text: str, jurisdiction: str = "India") -> dict:
         truncated = contract_text[:50000]
 
-        # ── Step 1: extract section headings so we can mandate complete coverage ──
+        # ── Step 1: extract section headings ──────────────────────────────────
         section_list = self._extract_section_list(truncated)
         sections_directive = (
             f"You MUST analyze ALL {len(section_list)} of these sections — do not skip any:\n"
@@ -176,7 +194,7 @@ class ClauseAnalyzer:
 
         extracted, risks, comparisons, summary = self._run_tool_loop(main_prompt, jurisdiction=jurisdiction)
 
-        # ── Step 3: gap-fill — find sections the model skipped ────────────────
+        # ── Step 3: gap-fill ──────────────────────────────────────────────────
         skipped = self._find_skipped_sections(section_list, extracted)
 
         if skipped:
@@ -187,7 +205,6 @@ class ClauseAnalyzer:
                 + f"\n\nCONTRACT TEXT:\n\n{truncated}"
             )
             ext2, risk2, comp2, summary2 = self._run_tool_loop(gap_prompt, jurisdiction=jurisdiction)
-            # Merge gap-fill results (don't overwrite existing good data)
             for k, v in ext2.items():
                 extracted.setdefault(k, v)
             for k, v in risk2.items():
@@ -214,7 +231,9 @@ class ClauseAnalyzer:
                 )
             ),
         ])
-        lines = response.content.strip().split("\n")
+        # Flatten Gemini list content before splitting
+        text = _flatten_content(response.content)
+        lines = text.strip().split("\n")
         return [ln.strip() for ln in lines if ln.strip()]
 
     def _run_tool_loop(
@@ -235,13 +254,10 @@ class ClauseAnalyzer:
             response = llm_with_tools.invoke(messages)
             messages.append(response)
 
-            # Capture any text output as the running summary
-            if isinstance(response.content, str) and response.content.strip():
-                summary = response.content
-            elif isinstance(response.content, list):
-                for part in response.content:
-                    if isinstance(part, dict) and part.get("type") == "text" and part.get("text"):
-                        summary = part["text"]
+            # Flatten Gemini list content for summary capture
+            text = _flatten_content(response.content)
+            if text.strip():
+                summary = text.strip()
 
             if response.tool_calls:
                 for tc in response.tool_calls:
@@ -280,11 +296,9 @@ class ClauseAnalyzer:
         skipped = []
 
         for section in section_list:
-            # Split the heading into meaningful words (>3 chars) for fuzzy matching
             words = [w.lower() for w in section.replace(".", " ").split() if len(w) > 3]
             if not words:
                 continue
-            # A section is "covered" if any extracted key shares at least one keyword with it
             covered = any(
                 any(word in covered_key or covered_key in word for covered_key in covered_lower)
                 for word in words
@@ -356,7 +370,6 @@ class ClauseAnalyzer:
             else:
                 overall = scores[0]
 
-            # If any clause is Critical, the overall should reflect that
             if any(f["risk_score"] >= 85 for f in findings):
                 overall = max(overall, 82)
 

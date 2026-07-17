@@ -40,9 +40,9 @@ def get_vector_store(pinecone_api_key: str, index_name: str):
 
 
 @st.cache_resource
-def get_analyzer(groq_api_key: str):
+def get_analyzer(gemini_api_key: str):
     from backend.clause_analyzer import ClauseAnalyzer
-    return ClauseAnalyzer(groq_api_key=groq_api_key)
+    return ClauseAnalyzer(gemini_api_key=gemini_api_key)
 
 
 # ── helpers ────────────────────────────────────────────────────────────────────
@@ -104,12 +104,12 @@ with st.sidebar:
     st.info("🔒 Your API Keys are SAFE with us!")
     st.divider()
 
-    groq_key = st.text_input(
-        "Groq API Key",
+    gemini_key = st.text_input(
+        "Google AI API Key",
         type="password",
-        placeholder="gsk_...",
-        help="Get yours at console.groq.com",
-        key="groq_api_key",
+        placeholder="AIza...",
+        help="Get yours free at aistudio.google.com",
+        key="gemini_api_key",
     )
     pinecone_key = st.text_input(
         "Pinecone API Key",
@@ -120,12 +120,12 @@ with st.sidebar:
     )
 
     index_name = "clauseguard"  # fixed — users don't need to configure this
-    keys_ready = bool(groq_key and pinecone_key)
+    keys_ready = bool(gemini_key and pinecone_key)
 
     if keys_ready:
         st.success("Connected")
     else:
-        missing = [k for k, v in [("Groq API Key", groq_key), ("Pinecone API Key", pinecone_key)] if not v]
+        missing = [k for k, v in [("Google AI API Key", gemini_key), ("Pinecone API Key", pinecone_key)] if not v]
         st.warning(f"Enter: {', '.join(missing)}")
 
     # Stop here if keys aren't ready — nothing below works without them
@@ -190,7 +190,7 @@ with st.sidebar:
         if st.session_state.risk_report is None:
             if st.button("🔍 Generate Risk Report", type="primary", use_container_width=True):
                 st.session_state.analysis_error = None
-                analyzer = get_analyzer(groq_key)
+                analyzer = get_analyzer(gemini_key)
                 with st.spinner("Analyzing clauses… (30–90 sec)"):
                     try:
                         st.session_state.risk_report = analyzer.generate_risk_report(
@@ -222,7 +222,7 @@ st.markdown("# ⚖️ ClauseGuard")
 st.markdown("#### Legal Contract Intelligence Platform")
 st.markdown(
     "Upload any contract — NDA, employment agreement, service agreement — "
-    "and get structured risk analysis powered by Llama 3.3 70B."
+    "and get structured risk analysis powered by Gemini Flash."
 )
 if not st.session_state.contract_id:
     st.stop()
@@ -262,7 +262,7 @@ with tab_qa:
 
         with st.chat_message("assistant"):
             vector_store = get_vector_store(pinecone_key, index_name)
-            analyzer = get_analyzer(groq_key)
+            analyzer = get_analyzer(gemini_key)
             with st.spinner("Searching contract…"):
                 chunks = vector_store.search(prompt, st.session_state.contract_id, k=5)
                 try:
