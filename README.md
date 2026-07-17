@@ -26,9 +26,9 @@ flowchart TD
     A([👤 User]) --> B["🖥️ Streamlit\nUI"]
     B --> C["📄 Document Processor\nPyMuPDF · python-docx"]
     C --> D["🗄️ Pinecone\nVector Store"]
-    B --> E["🧠 ClauseAnalyzer\nLangChain + Groq"]
+    B --> E["🧠 ClauseAnalyzer\nLangChain + Gemini Flash"]
     D -->|RAG chunks| E
-    E --> F["⚡ Groq API\nLlama 3.3 70B"]
+    E --> F["⚡ Google Gemini API\nGemini Flash Model"]
     F -->|Tool calls| G["🛠️ extract_clause\nflag_risk\ncompare_to_standard"]
     G --> H["📊 Risk Report\nBuilder"]
     H --> B
@@ -41,7 +41,7 @@ flowchart TD
 | Component | Technology | Purpose |
 |---|---|---|
 | UI | Streamlit | Chat interface, risk report display, clause browser |
-| LLM | Groq — `llama-3.3-70b-versatile` | Clause extraction, risk scoring, Q&A |
+| LLM | Google — `Gemini Flash Model` | Clause extraction, risk scoring, Q&A |
 | LLM Client | LangChain Groq | Groq API integration + tool binding |
 | Vector DB | Pinecone (serverless) | Semantic search over contract chunks |
 | Embeddings | `BAAI/bge-small-en-v1.5` | 384-dim sentence embeddings via sentence-transformers |
@@ -60,7 +60,7 @@ flowchart LR
     DP -->|chunks + text| PC["🗄️ Pinecone\nVector Store"]
     ST -->|question| CA["🧠 ClauseAnalyzer"]
     PC -->|top-k chunks| CA
-    CA --> GR["⚡ Groq\nLlama 3.3 70B"]
+    CA --> GR["⚡ Google Gemini API \nGemini Flash Model"]
     GR -->|tool calls| TR["🛠️ Tool Results"]
     TR --> RB["📊 Report Builder"]
     RB --> ST
@@ -196,7 +196,7 @@ Clauseguard/
 
 ```
 langchain>=0.3.0
-langchain-groq>=0.2.0
+langchain-google-genai
 langchain-pinecone>=0.2.0
 langchain-huggingface>=0.1.0
 langchain-core>=0.3.0
@@ -246,7 +246,7 @@ API keys are entered in the sidebar and bound to `@st.cache_resource` keyed by t
 
 | Service | Purpose | Get Key |
 |---|---|---|
-| Groq | Serves `llama-3.3-70b-versatile` for clause analysis and Q&A | [console.groq.com](https://console.groq.com) |
+| Google | Serves `Gemini Flash Model` for clause analysis and Q&A | [aistudio.google.com](https://aistudio.google.com/) |
 | Pinecone | Hosts the contract vector index for semantic search | [app.pinecone.io](https://app.pinecone.io) |
 
 Keys are entered via the sidebar and are **never stored** — they exist only within your active Streamlit session.
