@@ -4,6 +4,8 @@
 
 > Upload any contract. Get a structured, jurisdiction-aware risk report — clause by clause — in under 90 seconds.
 
+> 🎯 **Try it instantly — no API keys needed.** Open the [live app](https://clauseguardapp.streamlit.app), keep **Try Demo** selected, click **📄 Load sample contract**, then **🔍 Generate Risk Report**.
+
 An AI-powered legal contract analysis platform that combines **RAG-based Q&A** with an **agentic tool-calling risk engine** inside a clean Streamlit interface. Upload a PDF, Word, or plain-text contract, select your jurisdiction (India or United States), and ClauseGuard extracts every clause, scores it against jurisdiction-specific legal standards, and flags risks with actionable recommendations.
 
 ---
@@ -15,6 +17,7 @@ An AI-powered legal contract analysis platform that combines **RAG-based Q&A** w
 - 💬 **Natural-language Q&A** — ask anything about the contract; answers are grounded in the actual document via RAG
 - 📋 **Market standard comparison** — each key clause compared against jurisdiction-specific market norms (Favorable / Market Standard / Unfavorable / Highly Unfavorable / Missing)
 - 🔁 **Complete coverage guarantee** — section pre-pass extracts all headings; gap-fill pass re-analyses any sections the model skipped
+- 🎯 **One-click demo mode** — visitors can try the full app with a built-in sample contract, no API keys needed (usage-capped per visitor and per day)
 - 🔑 **No stored credentials** — API keys are entered per session and never persisted anywhere
 
 ---
@@ -152,9 +155,9 @@ Then open your browser at `http://localhost:8501` and enter your API keys in the
 ### Risk Analysis
 
 ```
-1. Enter your Google and Pinecone API keys in the sidebar
+1. Choose "Try Demo" (no keys needed) or enter your Google and Pinecone API keys in the sidebar
 2. Select jurisdiction: India or United States
-3. Upload a PDF, Word, or plain-text contract
+3. Upload a PDF, Word, or plain-text contract — or click "Load sample contract"
 4. Click "Generate Risk Report"
 5. Browse findings by risk level in the Risk Analysis and Clauses tabs
 ```
@@ -182,6 +185,8 @@ Clauseguard/
 │   ├── clause_analyzer.py          # LLM orchestration, tool-use loop, report builder
 │   ├── document_processor.py       # PDF / DOCX / TXT parsing and chunking
 │   └── vector_store.py             # Pinecone index management and similarity search
+├── samples/
+│   └── sample_employment_agreement.txt  # Fictional contract used by "Load sample contract"
 ├── templates/
 │   ├── __init__.py                 # Jurisdiction router
 │   ├── standard_clauses_india.py   # Indian legal standards and score calibration
@@ -249,6 +254,23 @@ API keys are entered in the sidebar and bound to `@st.cache_resource` keyed by t
 | Pinecone | Hosts the contract vector index for semantic search | [app.pinecone.io](https://app.pinecone.io) |
 
 Keys are entered via the sidebar and are **never stored** — they exist only within your active Streamlit session.
+
+### Demo mode (for deployers)
+
+Demo mode lets visitors use the app owner's keys. The keys are read from **Streamlit Secrets** — never commit them to the repo. On Streamlit Community Cloud go to **Manage app → Settings → Secrets** (or locally create `.streamlit/secrets.toml`, which is git-ignored) and add:
+
+```toml
+DEMO_GEMINI_API_KEY = "AIza..."
+DEMO_PINECONE_API_KEY = "pcsk_..."
+
+# Optional — usage caps (defaults shown)
+DEMO_SESSION_REPORTS = 2      # risk reports per visitor session
+DEMO_SESSION_QUESTIONS = 10   # Q&A questions per visitor session
+DEMO_DAILY_REPORTS = 15       # risk reports per day, across all visitors (resets 00:00 UTC)
+DEMO_DAILY_QUESTIONS = 100    # Q&A questions per day, across all visitors
+```
+
+If the demo keys aren't set, the demo option is hidden and the app works with user-supplied keys only. In demo mode, contracts are limited to 20,000 characters, only one risk report runs at a time, and failed requests don't count against a visitor's limit.
 
 ---
 

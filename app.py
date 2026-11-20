@@ -1,3 +1,11 @@
+import io
+import logging
+import os
+import threading
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
 import streamlit as st
 
 st.set_page_config(
@@ -82,7 +90,167 @@ def score_label(score: int) -> tuple[str, str]:
     return "Low Risk", "#16a34a"
 
 
+# ── demo mode ──────────────────────────────────────────────────────────────────
+# Lets visitors try ClauseGuard on the owner's API keys, which are read from
+# Streamlit Secrets (never from the repo). Usage is capped per visitor session
+# AND across the whole app per UTC day, so the keys can't be drained.
+
+def _secret(name: str, default=None):
+    try:
+        value = st.secrets.get(name)
+    except Exception:  # no secrets.toml configured
+        value = None
+    if value in (None, ""):
+        value = os.getenv(name, default)
+    return value
+
+
+def _int_secret(name: str, default: int) -> int:
+    try:
+        return int(_secret(name, default))  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+
+
+DEMO_GEMINI_KEY = _secret("DEMO_GEMINI_API_KEY")
+DEMO_PINECONE_KEY = _secret("DEMO_PINECONE_API_KEY")
+DEMO_AVAILABLE = bool(DEMO_GEMINI_KEY and DEMO_PINECONE_KEY)
+
+DEMO_LIMITS = {
+    # kind: (per visitor session, whole app per UTC day)
+    "report": (_int_secret("DEMO_SESSION_REPORTS", 2), _int_secret("DEMO_DAILY_REPORTS", 15)),
+    "question": (_int_secret("DEMO_SESSION_QUESTIONS", 10), _int_secret("DEMO_DAILY_QUESTIONS", 100)),
+}
+DEMO_MAX_CHARS = 20_000      # each report re-sends the contract on every LLM call
+DEMO_REPORT_TIMEOUT = 600    # seconds before a stuck "report running" slot is freed
+
+MODE_DEMO = "🎯 Try Demo (no keys needed)"
+MODE_OWN = "🔑 Use my own API keys"
+
+SAMPLE_CONTRACT_PATH = Path(__file__).parent / "samples" / "sample_employment_agreement.txt"
+SAMPLE_CONTRACT_NAME = "Sample - Employment Agreement (India).txt"
+
+
+class DemoUsage:
+    """App-wide demo counters shared by every session (thread-safe)."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._day = None
+        self._counts = {"report": 0, "question": 0}
+        self._report_started_at = None
+
+    def _roll_day(self) -> None:
+        today = datetime.now(timezone.utc).date()
+        if today != self._day:
+            self._day = today
+            self._counts = {"report": 0, "question": 0}
+
+    def remaining(self, kind: str, limit: int) -> int:
+        with self._lock:
+            self._roll_day()
+            return max(0, limit - self._counts[kind])
+
+    def try_use(self, kind: str, limit: int) -> bool:
+        with self._lock:
+            self._roll_day()
+            if self._counts[kind] >= limit:
+                return False
+            self._counts[kind] += 1
+            return True
+
+    def refund(self, kind: str) -> None:
+        with self._lock:
+            self._counts[kind] = max(0, self._counts[kind] - 1)
+
+    def try_start_report(self) -> bool:
+        """Only one demo report at a time, so concurrent visitors can't trip Gemini's per-minute limit."""
+        with self._lock:
+            now = time.time()
+            if self._report_started_at and now - self._report_started_at < DEMO_REPORT_TIMEOUT:
+                return False
+            self._report_started_at = now
+            return True
+
+    def finish_report(self) -> None:
+        with self._lock:
+            self._report_started_at = None
+
+
+@st.cache_resource
+def get_demo_usage() -> DemoUsage:
+    return DemoUsage()
+
+
+def demo_remaining(kind: str) -> int:
+    session_limit, daily_limit = DEMO_LIMITS[kind]
+    session_left = session_limit - st.session_state[f"demo_{kind}s_used"]
+    return max(0, min(session_left, get_demo_usage().remaining(kind, daily_limit)))
+
+
+def _limit_message(kind: str, scope: str) -> str:
+    noun = "risk report" if kind == "report" else "question"
+    if scope == "session":
+        return (
+            f"You've used all {DEMO_LIMITS[kind][0]} demo {noun}s for this session. "
+            "To keep exploring, switch to **Use my own API keys** — Google AI Studio and Pinecone both have free tiers."
+        )
+    return (
+        f"The demo has reached today's {noun} limit (it resets at midnight UTC). "
+        "You can still try ClauseGuard right now with your own free API keys."
+    )
+
+
+def demo_exhausted_message(kind: str) -> str:
+    """Explain why no demo uses are left (doesn't consume anything)."""
+    if st.session_state[f"demo_{kind}s_used"] >= DEMO_LIMITS[kind][0]:
+        return _limit_message(kind, "session")
+    return _limit_message(kind, "daily")
+
+
+def reserve_demo(kind: str) -> str | None:
+    """Consume one demo use. Returns a message to show the visitor if they're out of uses."""
+    session_limit, daily_limit = DEMO_LIMITS[kind]
+    if st.session_state[f"demo_{kind}s_used"] >= session_limit:
+        return _limit_message(kind, "session")
+    if not get_demo_usage().try_use(kind, daily_limit):
+        return _limit_message(kind, "daily")
+    st.session_state[f"demo_{kind}s_used"] += 1
+    return None
+
+
+def release_demo(kind: str) -> None:
+    """Give a demo use back when the call failed, so visitors aren't charged for errors."""
+    st.session_state[f"demo_{kind}s_used"] = max(0, st.session_state[f"demo_{kind}s_used"] - 1)
+    get_demo_usage().refund(kind)
+
+
+def demo_error_message(exc: Exception) -> str:
+    logging.exception("Demo mode request failed", exc_info=exc)
+    text = str(exc).lower()
+    if any(s in text for s in ("429", "resource_exhausted", "resourceexhausted", "quota", "rate limit")):
+        return "The demo is busy right now (rate limit reached). Please wait a minute and try again."
+    return "Something went wrong while running the demo. Please try again in a minute."
+
+
+class _NamedBytes(io.BytesIO):
+    """In-memory file with a .name, so the sample contract looks like an upload."""
+
+    def __init__(self, data: bytes, name: str) -> None:
+        super().__init__(data)
+        self.name = name
+
+
 # ── session state defaults ─────────────────────────────────────────────────────
+
+CONTRACT_KEYS = ("contract_id", "contract_name", "contract_text", "messages", "risk_report", "analysis_error", "analysis_notice")
+
+
+def reset_contract() -> None:
+    for k in CONTRACT_KEYS:
+        st.session_state[k] = [] if k == "messages" else None
+    st.session_state.uploader_nonce += 1  # also empties the file uploader widget
+
 
 for _key, _default in [
     ("contract_id", None),
@@ -91,6 +259,11 @@ for _key, _default in [
     ("messages", []),
     ("risk_report", None),
     ("analysis_error", None),
+    ("analysis_notice", None),
+    ("demo_reports_used", 0),
+    ("demo_questions_used", 0),
+    ("uploader_nonce", 0),
+    ("active_mode", None),
 ]:
     if _key not in st.session_state:
         st.session_state[_key] = _default
@@ -99,37 +272,61 @@ for _key, _default in [
 # ── sidebar ────────────────────────────────────────────────────────────────────
 
 with st.sidebar:
-    st.markdown("## 🔑 API Configuration")
-    st.markdown("Enter your API keys to start ClauseGuard.")
-    st.info("🔒 Your API Keys are SAFE with us!")
-    st.divider()
+    if DEMO_AVAILABLE:
+        st.markdown("## 🚀 Get Started")
+        mode = st.radio("Mode", [MODE_DEMO, MODE_OWN], key="mode", label_visibility="collapsed")
+    else:
+        mode = MODE_OWN
+    demo_mode = mode == MODE_DEMO
 
-    gemini_key = st.text_input(
-        "Google AI API Key",
-        type="password",
-        placeholder="AIza...",
-        help="Get yours free at aistudio.google.com",
-        key="gemini_api_key",
-    )
-    pinecone_key = st.text_input(
-        "Pinecone API Key",
-        type="password",
-        placeholder="pcsk_...",
-        help="Get yours at app.pinecone.io",
-        key="pinecone_api_key",
-    )
+    # Contracts are indexed in the active mode's Pinecone account, so switching modes starts fresh
+    if st.session_state.active_mode not in (None, mode):
+        reset_contract()
+    st.session_state.active_mode = mode
+
+    if demo_mode:
+        st.success("Demo mode is on — no API keys needed.")
+        st.caption(
+            f"🎯 Demo uses left: **{demo_remaining('report')}** risk reports · "
+            f"**{demo_remaining('question')}** questions"
+        )
+        st.caption("Please don't upload confidential documents in demo mode.")
+        gemini_key, pinecone_key = str(DEMO_GEMINI_KEY), str(DEMO_PINECONE_KEY)
+    else:
+        st.markdown("## 🔑 API Configuration")
+        st.markdown("Enter your API keys to start ClauseGuard.")
+        st.info("🔒 Your API Keys are SAFE with us!")
+        st.divider()
+
+        gemini_key = st.text_input(
+            "Google AI API Key",
+            type="password",
+            placeholder="AIza...",
+            help="Get yours free at aistudio.google.com",
+            key="gemini_api_key",
+        )
+        pinecone_key = st.text_input(
+            "Pinecone API Key",
+            type="password",
+            placeholder="pcsk_...",
+            help="Get yours at app.pinecone.io",
+            key="pinecone_api_key",
+        )
 
     index_name = "clauseguard"  # fixed — users don't need to configure this
     keys_ready = bool(gemini_key and pinecone_key)
 
-    if keys_ready:
-        st.success("Connected")
-    else:
-        missing = [k for k, v in [("Google AI API Key", gemini_key), ("Pinecone API Key", pinecone_key)] if not v]
-        st.warning(f"Enter: {', '.join(missing)}")
+    if not demo_mode:
+        if keys_ready:
+            st.success("Connected")
+        else:
+            missing = [k for k, v in [("Google AI API Key", gemini_key), ("Pinecone API Key", pinecone_key)] if not v]
+            st.warning(f"Enter: {', '.join(missing)}")
 
     # Stop here if keys aren't ready — nothing below works without them
     if not keys_ready:
+        if DEMO_AVAILABLE:
+            st.caption("No keys? Pick **Try Demo** above.")
         st.stop()
 
     st.divider()
@@ -163,24 +360,51 @@ with st.sidebar:
         type=["pdf", "docx", "txt"],
         label_visibility="collapsed",
         help="Supports PDF, Word (.docx), and plain text",
+        key=f"uploader_{st.session_state.uploader_nonce}",
     )
 
-    if uploaded and uploaded.name != st.session_state.contract_name:
+    load_sample = st.button(
+        "📄 Load sample contract",
+        use_container_width=True,
+        help="A fictional Indian employment agreement with several risky clauses",
+    )
+
+    to_process = None
+    if load_sample:
+        to_process = _NamedBytes(SAMPLE_CONTRACT_PATH.read_bytes(), SAMPLE_CONTRACT_NAME)
+    elif uploaded and uploaded.name != st.session_state.contract_name:
+        to_process = uploaded
+
+    if to_process is not None:
         try:
             processor = get_processor()
-            vector_store = get_vector_store(pinecone_key, index_name)
-            with st.spinner("Parsing & indexing…"):
-                cid, chunks, text = processor.process(uploaded)
-                vector_store.add_document(cid, chunks, uploaded.name)
-            st.session_state.contract_id = cid
-            st.session_state.contract_name = uploaded.name
-            st.session_state.contract_text = text
-            st.session_state.messages = []
-            st.session_state.risk_report = None
-            st.session_state.analysis_error = None
-            st.success("Contract uploaded successfully")
+            cid, chunks, text = processor.process(to_process)
+            if demo_mode and len(text) > DEMO_MAX_CHARS:
+                st.warning(
+                    f"Demo mode supports contracts up to {DEMO_MAX_CHARS:,} characters "
+                    f"(this one has {len(text):,}). Try the sample contract, or use your own API keys for longer documents."
+                )
+            else:
+                vector_store = get_vector_store(pinecone_key, index_name)
+                with st.spinner("Parsing & indexing…"):
+                    vector_store.add_document(cid, chunks, to_process.name)
+                if load_sample:
+                    reset_contract()  # empties the uploader so it can't override the sample
+                st.session_state.contract_id = cid
+                st.session_state.contract_name = to_process.name
+                st.session_state.contract_text = text
+                st.session_state.messages = []
+                st.session_state.risk_report = None
+                st.session_state.analysis_error = None
+                st.session_state.analysis_notice = None
+                if load_sample:
+                    st.rerun()
+                st.success("Contract uploaded successfully")
         except Exception as exc:
-            st.error(f"Failed to process file: {exc}")
+            if demo_mode:
+                st.error(demo_error_message(exc))
+            else:
+                st.error(f"Failed to process file: {exc}")
 
     if st.session_state.contract_id:
         st.divider()
@@ -190,18 +414,37 @@ with st.sidebar:
         if st.session_state.risk_report is None:
             if st.button("🔍 Generate Risk Report", type="primary", use_container_width=True):
                 st.session_state.analysis_error = None
-                analyzer = get_analyzer(gemini_key)
-                with st.spinner("Analyzing clauses… (30–90 sec)"):
-                    try:
-                        st.session_state.risk_report = analyzer.generate_risk_report(
-                            st.session_state.contract_text,
-                            jurisdiction=jurisdiction,
+                st.session_state.analysis_notice = None
+                if demo_mode:
+                    st.session_state.analysis_notice = reserve_demo("report")
+                    if not st.session_state.analysis_notice and not get_demo_usage().try_start_report():
+                        release_demo("report")
+                        st.session_state.analysis_notice = (
+                            "Another visitor is generating a demo report right now. "
+                            "Please try again in a minute or two."
                         )
-                    except Exception as exc:
-                        import traceback
-                        st.session_state.analysis_error = f"{exc}\n\n{traceback.format_exc()}"
+                if not st.session_state.analysis_notice:
+                    analyzer = get_analyzer(gemini_key)
+                    with st.spinner("Analyzing clauses… (30–90 sec)"):
+                        try:
+                            st.session_state.risk_report = analyzer.generate_risk_report(
+                                st.session_state.contract_text,
+                                jurisdiction=jurisdiction,
+                            )
+                        except Exception as exc:
+                            if demo_mode:
+                                release_demo("report")
+                                st.session_state.analysis_notice = demo_error_message(exc)
+                            else:
+                                import traceback
+                                st.session_state.analysis_error = f"{exc}\n\n{traceback.format_exc()}"
+                        finally:
+                            if demo_mode:
+                                get_demo_usage().finish_report()
                 st.rerun()
 
+            if st.session_state.analysis_notice:
+                st.warning(st.session_state.analysis_notice)
             if st.session_state.analysis_error:
                 st.error(f"Analysis failed: {st.session_state.analysis_error}")
         else:
@@ -211,8 +454,7 @@ with st.sidebar:
                 st.rerun()
 
         if st.button("Clear contract", use_container_width=True):
-            for k in ("contract_id", "contract_name", "contract_text", "messages", "risk_report", "analysis_error"):
-                st.session_state[k] = None if k != "messages" else []
+            reset_contract()
             st.rerun()
 
 
@@ -225,6 +467,11 @@ st.markdown(
     "and get structured risk analysis powered by Gemini Flash."
 )
 if not st.session_state.contract_id:
+    if demo_mode:
+        st.info(
+            "👈 **New here?** Click **📄 Load sample contract** in the sidebar, then "
+            "**🔍 Generate Risk Report** — or upload your own contract. No API keys needed."
+        )
     st.stop()
 
 st.divider()
@@ -255,23 +502,35 @@ with tab_qa:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Ask about your contract…"):
+    questions_left = demo_remaining("question") if demo_mode else None
+    if demo_mode and questions_left == 0:
+        st.info(demo_exhausted_message("question"))
+
+    if prompt := st.chat_input("Ask about your contract…", disabled=questions_left == 0):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            vector_store = get_vector_store(pinecone_key, index_name)
-            analyzer = get_analyzer(gemini_key)
-            with st.spinner("Searching contract…"):
-                chunks = vector_store.search(prompt, st.session_state.contract_id, k=5)
-                try:
-                    reply = analyzer.answer_question(
-                        prompt, chunks, st.session_state.messages[:-1],
-                        jurisdiction=jurisdiction,
-                    )
-                except Exception as exc:
-                    reply = f"⚠️ Error: {exc}"
+            blocked = reserve_demo("question") if demo_mode else None
+            if blocked:
+                reply = f"⚠️ {blocked}"
+            else:
+                vector_store = get_vector_store(pinecone_key, index_name)
+                analyzer = get_analyzer(gemini_key)
+                with st.spinner("Searching contract…"):
+                    try:
+                        chunks = vector_store.search(prompt, st.session_state.contract_id, k=5)
+                        reply = analyzer.answer_question(
+                            prompt, chunks, st.session_state.messages[:-1],
+                            jurisdiction=jurisdiction,
+                        )
+                    except Exception as exc:
+                        if demo_mode:
+                            release_demo("question")
+                            reply = f"⚠️ {demo_error_message(exc)}"
+                        else:
+                            reply = f"⚠️ Error: {exc}"
             st.markdown(reply)
 
         st.session_state.messages.append({"role": "assistant", "content": reply})
