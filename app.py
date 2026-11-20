@@ -244,6 +244,8 @@ def demo_error_message(exc: Exception) -> str:
     text = str(exc).lower()
     if any(s in text for s in ("429", "resource_exhausted", "resourceexhausted", "quota", "rate limit")):
         return "The demo is busy right now (rate limit reached). Please wait a minute and try again."
+    if any(s in text for s in ("503", "504", "unavailable", "deadline", "high demand", "timed out", "timeout")):
+        return "Google's AI model is overloaded right now. Please try again in a few minutes."
     return "Something went wrong while running the demo. Please try again in a minute."
 
 

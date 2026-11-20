@@ -270,6 +270,9 @@ DEMO_SESSION_REPORTS = 2      # risk reports per visitor session
 DEMO_SESSION_QUESTIONS = 10   # Q&A questions per visitor session
 DEMO_DAILY_REPORTS = 15       # risk reports per day, across all visitors (resets 00:00 UTC)
 DEMO_DAILY_QUESTIONS = 100    # Q&A questions per day, across all visitors
+
+# Optional — swap the Gemini model without a code change (default: gemini-3-flash-preview)
+# GEMINI_MODEL = "gemini-3-flash-preview"
 ```
 
 If the demo keys aren't set, the demo option is hidden and the app works with user-supplied keys only. In demo mode, contracts are limited to 20,000 characters, only one risk report runs at a time, and failed requests don't count against a visitor's limit.

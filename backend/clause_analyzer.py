@@ -8,6 +8,7 @@ LangChain + Gemini Flash orchestration layer.
 - v3: migrated from Groq/Llama to Google Gemini Flash
 """
 
+import os
 from typing import Literal, Union
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
@@ -16,7 +17,12 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-GEMINI_MODEL = "gemini-flash-latest"
+# gemini-flash-latest was persistently overloaded (503/504) as of Nov 2026, so pin a
+# model that answers reliably and batches all clause tool calls into a few requests.
+# Override without a code change via a GEMINI_MODEL env var / Streamlit secret.
+GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-3-flash-preview"
+GEMINI_TIMEOUT_SECONDS = 120   # per request; the slowest observed report call took ~30s
+GEMINI_MAX_RETRIES = 2         # SDK default is 6 with backoff, which looked like an endless hang
 
 _ANALYSIS_BASE = """You are ClauseGuard, an expert legal contract analyst. \
 Your primary goal is COMPLETE coverage — you must analyze EVERY section listed.
@@ -132,6 +138,8 @@ class ClauseAnalyzer:
             model=GEMINI_MODEL,
             google_api_key=gemini_api_key,
             temperature=0,
+            timeout=GEMINI_TIMEOUT_SECONDS,
+            max_retries=GEMINI_MAX_RETRIES,
         )
 
     @property
