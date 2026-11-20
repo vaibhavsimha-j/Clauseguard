@@ -127,8 +127,22 @@ DEMO_REPORT_TIMEOUT = 600    # seconds before a stuck "report running" slot is f
 MODE_DEMO = "🎯 Try Demo (no keys needed)"
 MODE_OWN = "🔑 Use my own API keys"
 
-SAMPLE_CONTRACT_PATH = Path(__file__).parent / "samples" / "sample_employment_agreement.txt"
-SAMPLE_CONTRACT_NAME = "Sample - Employment Agreement (India).txt"
+_SAMPLES_DIR = Path(__file__).parent / "samples"
+# jurisdiction -> (file, display name, flag, button tooltip)
+SAMPLE_CONTRACTS = {
+    "India": (
+        _SAMPLES_DIR / "sample_employment_agreement_india.txt",
+        "Sample - Employment Agreement (India).txt",
+        "🇮🇳",
+        "A fictional Bengaluru employment agreement with several clauses that are risky under Indian law",
+    ),
+    "United States": (
+        _SAMPLES_DIR / "sample_employment_agreement_us.txt",
+        "Sample - Employment Agreement (US - California).txt",
+        "🇺🇸",
+        "A fictional California employment agreement with several clauses that are risky under US law",
+    ),
+}
 
 
 class DemoUsage:
@@ -363,15 +377,16 @@ with st.sidebar:
         key=f"uploader_{st.session_state.uploader_nonce}",
     )
 
+    sample_path, sample_name, sample_flag, sample_help = SAMPLE_CONTRACTS[jurisdiction]
     load_sample = st.button(
-        "📄 Load sample contract",
+        f"📄 Load sample contract {sample_flag}",
         use_container_width=True,
-        help="A fictional Indian employment agreement with several risky clauses",
+        help=sample_help,
     )
 
     to_process = None
     if load_sample:
-        to_process = _NamedBytes(SAMPLE_CONTRACT_PATH.read_bytes(), SAMPLE_CONTRACT_NAME)
+        to_process = _NamedBytes(sample_path.read_bytes(), sample_name)
     elif uploaded and uploaded.name != st.session_state.contract_name:
         to_process = uploaded
 
@@ -469,8 +484,9 @@ st.markdown(
 if not st.session_state.contract_id:
     if demo_mode:
         st.info(
-            "👈 **New here?** Click **📄 Load sample contract** in the sidebar, then "
-            "**🔍 Generate Risk Report** — or upload your own contract. No API keys needed."
+            "👈 **New here?** Pick a jurisdiction, click **📄 Load sample contract** in the sidebar "
+            "(it loads a sample written for that jurisdiction), then **🔍 Generate Risk Report** — "
+            "or upload your own contract. No API keys needed."
         )
     st.stop()
 

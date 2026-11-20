@@ -158,6 +158,7 @@ Then open your browser at `http://localhost:8501` and enter your API keys in the
 1. Choose "Try Demo" (no keys needed) or enter your Google and Pinecone API keys in the sidebar
 2. Select jurisdiction: India or United States
 3. Upload a PDF, Word, or plain-text contract — or click "Load sample contract"
+   (loads an Indian or US sample, matching the selected jurisdiction)
 4. Click "Generate Risk Report"
 5. Browse findings by risk level in the Risk Analysis and Clauses tabs
 ```
@@ -186,7 +187,8 @@ Clauseguard/
 │   ├── document_processor.py       # PDF / DOCX / TXT parsing and chunking
 │   └── vector_store.py             # Pinecone index management and similarity search
 ├── samples/
-│   └── sample_employment_agreement.txt  # Fictional contract used by "Load sample contract"
+│   ├── sample_employment_agreement_india.txt  # Fictional Indian contract for "Load sample contract"
+│   └── sample_employment_agreement_us.txt     # Fictional California contract for "Load sample contract"
 ├── templates/
 │   ├── __init__.py                 # Jurisdiction router
 │   ├── standard_clauses_india.py   # Indian legal standards and score calibration

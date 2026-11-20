@@ -1,0 +1,93 @@
+EMPLOYMENT AGREEMENT
+
+This Employment Agreement ("Agreement") is entered into as of March 2, 2026, by and between Brightline Data Systems, Inc., a Delaware corporation with its principal place of business at 500 Harbor View Drive, Suite 1200, San Francisco, California 94105 (the "Company"), and Jordan Ellis, an individual residing at 2241 Alder Street, Oakland, California 94612 (the "Employee").
+
+SAMPLE DOCUMENT: This is a fictional contract created to demonstrate ClauseGuard. All names, parties and addresses are invented.
+
+Section 1. Position and Duties
+
+1.1 The Company employs the Employee as Senior Software Engineer, reporting to the Vice President of Engineering, beginning on March 16, 2026 (the "Start Date"). The Employee will work primarily from the Company's San Francisco office.
+
+1.2 The Employee shall devote their full business time to the Company and shall perform such additional duties as the Company may assign from time to time.
+
+Section 2. Compensation and Benefits
+
+2.1 The Company shall pay the Employee a base salary of $185,000 per year, payable in accordance with the Company's regular payroll schedule, less applicable withholdings.
+
+2.2 The Employee may be eligible for an annual bonus of up to 20% of base salary. Any bonus is entirely discretionary, and the Employee must be employed on the payment date to receive it. Any bonus that has been earned but not yet paid is forfeited upon termination of employment for any reason.
+
+2.3 The Employee shall be eligible to participate in the Company's standard benefit plans, subject to the terms of those plans.
+
+Section 3. At-Will Employment and Termination
+
+3.1 The Employee's employment is at-will. Either party may terminate the employment at any time, with or without cause or notice.
+
+3.2 Upon termination for any reason, the Employee shall not be entitled to any severance pay, notice pay or continuation of benefits, except as required by law.
+
+3.3 The Company may deduct from the Employee's final paycheck any amounts the Employee owes to the Company, including the cost of unreturned equipment and any unrecovered training costs.
+
+Section 4. Confidentiality
+
+4.1 The Employee shall hold in strict confidence, both during and at all times after employment and without limit of time, all non-public and public information relating to the Company's business, technology, customers, finances and personnel ("Confidential Information").
+
+4.2 This obligation applies regardless of whether such information is publicly available, was known to the Employee before employment, or is lawfully received from a third party. The Employee shall not disclose Confidential Information to any person, including any government agency, without the Company's prior written consent.
+
+Section 5. Assignment of Inventions
+
+5.1 The Employee hereby assigns to the Company all right, title and interest in any and all inventions, discoveries, software, works of authorship and ideas conceived, developed or reduced to practice by the Employee during the period of employment, whether or not during working hours, whether or not using the Company's equipment, supplies, facilities or trade secret information, and whether or not related to the Company's business or research.
+
+5.2 The Employee shall assist the Company in obtaining patents and other protections for such inventions, at the Employee's own expense, both during and after employment.
+
+Section 6. Non-Competition
+
+6.1 For a period of two (2) years following the termination of employment for any reason, the Employee shall not, anywhere in the United States, directly or indirectly own, manage, be employed by, or provide services to any business that develops data infrastructure, analytics or software products.
+
+6.2 The Employee agrees that the Company would suffer irreparable harm from any breach of this Section and that the Company shall be entitled to injunctive relief in addition to liquidated damages of $250,000.
+
+Section 7. Non-Solicitation
+
+7.1 For a period of two (2) years following the termination of employment, the Employee shall not solicit, contact or do business with any customer or prospective customer of the Company, whether or not the Employee had any contact with such customer.
+
+7.2 For the same period, the Employee shall not solicit, recruit or hire any employee or contractor of the Company.
+
+Section 8. Training Repayment
+
+8.1 If the Employee's employment ends for any reason within twenty-four (24) months of the Start Date, the Employee shall repay the Company $30,000 as reimbursement for onboarding and training costs, regardless of the actual cost of any training provided.
+
+Section 9. Indemnification
+
+9.1 The Employee shall indemnify, defend and hold harmless the Company and its officers, directors and affiliates from and against any and all claims, losses, liabilities, damages and expenses, including attorneys' fees, arising out of or relating to the Employee's performance of their job duties or any breach of this Agreement, without limitation as to amount.
+
+9.2 The Employee shall bear all expenses incurred in the performance of their duties, including mobile phone, home internet and travel costs, unless the Company agrees in advance in writing to reimburse them.
+
+Section 10. Limitation of Liability
+
+10.1 In no event shall the Company's total liability to the Employee arising out of or relating to this Agreement or the Employee's employment exceed one thousand dollars ($1,000), and the Company shall not be liable for any indirect, consequential or punitive damages.
+
+10.2 No corresponding limitation shall apply to the Employee's liability to the Company.
+
+Section 11. Arbitration and Class Action Waiver
+
+11.1 Any dispute arising out of or relating to this Agreement or the Employee's employment shall be resolved exclusively by final and binding arbitration before a single arbitrator selected by the Company, conducted in Wilmington, Delaware.
+
+11.2 The Employee shall bear one-half of all arbitration fees and costs, including the arbitrator's fees, and each party shall bear its own attorneys' fees, regardless of the outcome.
+
+11.3 The Employee waives any right to bring or participate in any class, collective or representative action.
+
+11.4 Notwithstanding the foregoing, the Company may seek injunctive or other relief in any court of competent jurisdiction.
+
+Section 12. Governing Law and Venue
+
+12.1 This Agreement shall be governed by the laws of the State of Delaware, without regard to its conflict-of-laws principles. The Employee consents to the exclusive jurisdiction of the state and federal courts located in Delaware.
+
+Section 13. Entire Agreement
+
+13.1 This Agreement is the entire agreement between the parties and supersedes all prior agreements and understandings. The Company may modify the Company policies referenced in this Agreement at any time, and such modifications shall bind the Employee upon posting to the Company's internal website.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.
+
+Brightline Data Systems, Inc.
+By: Authorized Officer
+
+Jordan Ellis
+Employee
