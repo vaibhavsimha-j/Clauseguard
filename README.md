@@ -271,11 +271,18 @@ DEMO_SESSION_QUESTIONS = 10   # Q&A questions per visitor session
 DEMO_DAILY_REPORTS = 15       # risk reports per day, across all visitors (resets 00:00 UTC)
 DEMO_DAILY_QUESTIONS = 100    # Q&A questions per day, across all visitors
 
-# Optional — swap the Gemini model without a code change (default: gemini-3-flash-preview)
-# GEMINI_MODEL = "gemini-3-flash-preview"
+# Optional — model order (defaults shown); see "Model selection" below
+# GEMINI_MODEL = "gemini-flash-latest"
+# GEMINI_FALLBACK_MODELS = "gemini-3-flash-preview,gemini-flash-lite-latest"
 ```
 
 If the demo keys aren't set, the demo option is hidden and the app works with user-supplied keys only. In demo mode, contracts are limited to 20,000 characters, only one risk report runs at a time, and failed requests don't count against a visitor's limit.
+
+### Model selection — auto-updating with fallback
+
+ClauseGuard always tries Google's auto-updating `gemini-flash-latest` alias first, so it moves to new Gemini releases without code changes. New releases are often overloaded at launch, so a quick health check (re-run every 10 minutes) skips models that aren't answering, and each request also falls back down the list if a call fails. Every request has a 120-second timeout, so a slow model ends in a clear message instead of an endless spinner. The model in use is shown in the sidebar.
+
+Default order: `gemini-flash-latest` → `gemini-3-flash-preview` → `gemini-flash-lite-latest`, overridable with the `GEMINI_MODEL` / `GEMINI_FALLBACK_MODELS` secrets above.
 
 ---
 

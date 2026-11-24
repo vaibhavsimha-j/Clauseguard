@@ -242,6 +242,9 @@ def release_demo(kind: str) -> None:
 def demo_error_message(exc: Exception) -> str:
     logging.exception("Demo mode request failed", exc_info=exc)
     text = str(exc).lower()
+    if "full-size gemini model" in text or "per day" in text:
+        return ("The AI model used for risk reports has reached Google's free-tier limit for now. "
+                "Please try again later — or switch to **Use my own API keys** (Google AI Studio keys are free).")
     if any(s in text for s in ("429", "resource_exhausted", "resourceexhausted", "quota", "rate limit")):
         return "The demo is busy right now (rate limit reached). Please wait a minute and try again."
     if any(s in text for s in ("503", "504", "unavailable", "deadline", "high demand", "timed out", "timeout")):
@@ -280,6 +283,7 @@ for _key, _default in [
     ("demo_questions_used", 0),
     ("uploader_nonce", 0),
     ("active_mode", None),
+    ("active_model", ""),
 ]:
     if _key not in st.session_state:
         st.session_state[_key] = _default
@@ -338,6 +342,9 @@ with st.sidebar:
         else:
             missing = [k for k, v in [("Google AI API Key", gemini_key), ("Pinecone API Key", pinecone_key)] if not v]
             st.warning(f"Enter: {', '.join(missing)}")
+
+    if keys_ready and st.session_state.active_model:
+        st.caption(f"🤖 Model: `{st.session_state.active_model}`")
 
     # Stop here if keys aren't ready — nothing below works without them
     if not keys_ready:
@@ -456,6 +463,7 @@ with st.sidebar:
                                 import traceback
                                 st.session_state.analysis_error = f"{exc}\n\n{traceback.format_exc()}"
                         finally:
+                            st.session_state.active_model = analyzer.active_model
                             if demo_mode:
                                 get_demo_usage().finish_report()
                 st.rerun()
@@ -543,6 +551,7 @@ with tab_qa:
                             prompt, chunks, st.session_state.messages[:-1],
                             jurisdiction=jurisdiction,
                         )
+                        st.session_state.active_model = analyzer.active_model
                     except Exception as exc:
                         if demo_mode:
                             release_demo("question")

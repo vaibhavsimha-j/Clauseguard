@@ -8,21 +8,96 @@ LangChain + Gemini Flash orchestration layer.
 - v3: migrated from Groq/Llama to Google Gemini Flash
 """
 
+import hashlib
 import os
+import re
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Literal, Union
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-# gemini-flash-latest was persistently overloaded (503/504) as of Nov 2026, so pin a
-# model that answers reliably and batches all clause tool calls into a few requests.
-# Override without a code change via a GEMINI_MODEL env var / Streamlit secret.
-GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-3-flash-preview"
+# ── Model routing ─────────────────────────────────────────────────────────────
+# Always try Google's auto-updating "latest" alias first, so the app moves to new
+# Gemini releases without code changes. Fresh releases are often overloaded at
+# launch, so a quick health check (re-run every few minutes) skips models that
+# aren't answering, and every request also falls back down the list on error.
+# Override via env vars / Streamlit secrets (root-level secrets become env vars):
+#   GEMINI_MODEL (primary), GEMINI_FALLBACK_MODELS (comma-separated)
+GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-flash-latest"
+MODEL_PREFERENCE = tuple(dict.fromkeys([
+    GEMINI_MODEL,
+    *[m.strip() for m in (os.getenv("GEMINI_FALLBACK_MODELS")
+                          or "gemini-3-flash-preview,gemini-flash-lite-latest").split(",") if m.strip()],
+]))
 GEMINI_TIMEOUT_SECONDS = 120   # per request; the slowest observed report call took ~30s
-GEMINI_MAX_RETRIES = 2         # SDK default is 6 with backoff, which looked like an endless hang
+HEALTH_CHECK_TTL = 600         # seconds between model health checks
+
+_health_lock = threading.Lock()
+_health_cache: dict = {}       # (key hash, preference) -> (checked_at, healthy models)
+MAX_RATE_LIMIT_WAITS = 6       # per call, when a model is briefly over its per-minute quota
+
+
+class ReportModelUnavailable(RuntimeError):
+    """No model good enough for the agentic risk report is available right now."""
+
+
+def per_minute_wait(exc: Exception) -> float | None:
+    """Seconds to wait if `exc` is a short-lived per-minute rate limit, else None.
+    Per-day quota exhaustion and overload (503/504) return None: those need a
+    different model, not a pause."""
+    text = str(exc)
+    if "429" not in text or "per day" in text.lower():
+        return None
+    if "per minute" not in text.lower() and "retry in" not in text.lower():
+        return None
+    match = re.search(r"retry in ([\d.]+)s", text)
+    return min(float(match.group(1)) + 1, 60) if match else 20
+
+
+def _paced(runnable):
+    """Wrap a model so per-minute rate limits are waited out instead of failing."""
+    def call(payload):
+        for attempt in range(MAX_RATE_LIMIT_WAITS + 1):
+            try:
+                return runnable.invoke(payload)
+            except Exception as exc:
+                wait = per_minute_wait(exc)
+                if wait is None or attempt == MAX_RATE_LIMIT_WAITS:
+                    raise
+                time.sleep(wait)
+    return RunnableLambda(call)
+
+
+def healthy_models(api_key: str, preference: tuple = MODEL_PREFERENCE) -> tuple:
+    """`preference` minus models that aren't answering right now (order kept)."""
+    cache_key = (hashlib.sha256(api_key.encode()).hexdigest(), preference)
+    with _health_lock:
+        hit = _health_cache.get(cache_key)
+        if hit and time.time() - hit[0] < HEALTH_CHECK_TTL:
+            return hit[1]
+
+    def answers(model: str) -> bool:
+        try:
+            ChatGoogleGenerativeAI(model=model, google_api_key=api_key, temperature=0,
+                                   timeout=20, max_retries=1).invoke("Reply with just: OK")
+            return True
+        except Exception as exc:
+            # briefly over the per-minute quota = up; overloaded or out for the day = skip
+            return per_minute_wait(exc) is not None
+
+    with ThreadPoolExecutor(len(preference)) as pool:
+        ok = list(pool.map(answers, preference))
+    healthy = tuple(m for m, good in zip(preference, ok) if good) or preference
+    with _health_lock:
+        _health_cache[cache_key] = (time.time(), healthy)
+    return healthy
 
 _ANALYSIS_BASE = """You are ClauseGuard, an expert legal contract analyst. \
 Your primary goal is COMPLETE coverage — you must analyze EVERY section listed.
@@ -134,17 +209,37 @@ def _flatten_content(content) -> str:
 
 class ClauseAnalyzer:
     def __init__(self, gemini_api_key: str) -> None:
-        self._llm = ChatGoogleGenerativeAI(
-            model=GEMINI_MODEL,
-            google_api_key=gemini_api_key,
-            temperature=0,
-            timeout=GEMINI_TIMEOUT_SECONDS,
-            max_retries=GEMINI_MAX_RETRIES,
-        )
+        self._api_key = gemini_api_key
+        self.active_model = MODEL_PREFERENCE[0]
+
+    def _llm_chain(self, tools: list | None = None, full_size_only: bool = False):
+        """LLM that tries the currently-healthy models in order, falling back on error.
+        full_size_only skips "lite" models: in testing, a lite model completed the risk
+        report but scored a void non-compete as no risk, which is worse than no report."""
+        models = healthy_models(self._api_key)
+        if full_size_only:
+            models = tuple(m for m in models if "lite" not in m.lower())
+            if not models:
+                raise ReportModelUnavailable(
+                    "No full-size Gemini model is available right now "
+                    "(overloaded, or the free daily quota is used up)."
+                )
+        self.active_model = models[0]
+        llms = []
+        for i, model in enumerate(models):
+            llm = ChatGoogleGenerativeAI(
+                model=model,
+                google_api_key=self._api_key,
+                temperature=0,
+                timeout=GEMINI_TIMEOUT_SECONDS,
+                max_retries=2 if i == len(models) - 1 else 1,
+            )
+            llms.append(_paced(llm.bind_tools(tools) if tools else llm))
+        return llms[0].with_fallbacks(llms[1:]) if len(llms) > 1 else llms[0]
 
     @property
-    def llm(self) -> ChatGoogleGenerativeAI:
-        return self._llm
+    def llm(self):
+        return self._llm_chain()
 
     # ── Q&A ───────────────────────────────────────────────────────────────────
 
@@ -183,6 +278,7 @@ class ClauseAnalyzer:
 
     def generate_risk_report(self, contract_text: str, jurisdiction: str = "India") -> dict:
         truncated = contract_text[:50000]
+        self._llm_chain(full_size_only=True)  # fail fast, before spending any calls
 
         # ── Step 1: extract section headings ──────────────────────────────────
         section_list = self._extract_section_list(truncated)
@@ -251,7 +347,7 @@ class ClauseAnalyzer:
         max_iterations: int = 35,
     ) -> tuple[dict, dict, dict, str]:
         """Run the agentic tool-use loop and return (extracted, risks, comparisons, summary)."""
-        llm_with_tools = self.llm.bind_tools(TOOLS)
+        llm_with_tools = self._llm_chain(tools=TOOLS, full_size_only=True)
         messages: list = [
             SystemMessage(content=_build_analysis_system(jurisdiction)),
             HumanMessage(content=user_prompt),
